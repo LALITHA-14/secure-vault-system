@@ -1,16 +1,20 @@
-require("hardhat-deploy");
 require("@nomicfoundation/hardhat-toolbox");
+require("dotenv").config();
 
 module.exports = {
-  solidity: "0.8.20",
-  namedAccounts: {
-    deployer: {
-      default: 0,
-    },
+  solidity: {
+    version: "0.8.20",
+    settings: {
+      optimizer: {
+        enabled: true,
+        runs: 200
+      }
+    }
   },
+
   networks: {
     localhost: {
-      url: "http://127.0.0.1:8545", // make sure your local Hardhat node is running
-    },
-  },
+      url: "http://127.0.0.1:8545"
+    }
+  }
 };

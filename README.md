@@ -1,284 +1,80 @@
-\# Secure Vault System
+# Secure Vault System
 
+A secure Ethereum smart contract system that separates fund custody and authorization validation across two independent contracts.
 
-
-A minimal Ethereum smart contract system that enables secure ETH storage and controlled withdrawals using one-time authorizations with replay protection.
-
-
+The system demonstrates secure off-chain authorization handling, replay protection, deterministic state transitions, and safe cross-contract interactions.
 
 ---
 
+# System Architecture
 
+The project contains two core smart contracts:
 
-\## Overview
+## 1. SecureVault
 
+Responsible for:
 
+- Holding ETH deposits
+- Executing withdrawals
+- Delegating authorization checks
+- Emitting deposit and withdrawal events
 
-The Secure Vault System consists of two smart contracts:
-
-
-
-\- \*\*SecureVault\*\* — Holds ETH deposits and processes withdrawals.
-
-\- \*\*AuthorizationManager\*\* — Validates and enforces one-time use of withdrawal authorizations.
-
-
-
-Withdrawals are only allowed if a valid, unused authorization is provided.
-
-
+The vault never performs signature verification directly.
 
 ---
 
+## 2. AuthorizationManager
 
+Responsible for:
 
-\## Architecture
+- Verifying withdrawal authorizations
+- Recovering and validating ECDSA signatures
+- Enforcing replay protection
+- Tracking consumed authorizations
 
-
-
-User (off-chain)
-
-│
-
-│ generates authorization hash
-
-▼
-
-AuthorizationManager ── verifies \& consumes authorization
-
-│
-
-▼
-
-SecureVault ── transfers ETH to recipient
-
-
-
-
+Each authorization can only be consumed once.
 
 ---
 
+# Authorization Flow
 
+1. An authorized signer generates an off-chain authorization
 
-\## Contracts
+2. The authorization includes:
 
+- Vault address
+- Chain ID
+- Recipient address
+- Withdrawal amount
+- Unique authorization ID (nonce)
 
+3. The authorization is signed using ECDSA
 
-\### AuthorizationManager.sol
+4. A user submits:
 
+- Recipient
+- Amount
+- Authorization ID
+- Signature
 
+5. `AuthorizationManager` verifies:
 
-\- Stores consumed authorization IDs
+- Signature validity
+- Authorized signer identity
+- Replay protection
 
-\- Prevents replay attacks by enforcing one-time usage
-
-\- Emits events when an authorization is consumed
-
-
-
-\*\*Key property:\*\*  
-
-Each authorization can be used \*\*exactly once\*\*.
-
-
-
----
-
-
-
-\### SecureVault.sol
-
-
-
-\- Accepts ETH deposits via `receive()`
-
-\- Requests authorization validation from `AuthorizationManager`
-
-\- Ensures sufficient balance before transferring funds
-
-\- Emits deposit and withdrawal events
-
-
+6. If valid:
+- Authorization is consumed
+- Funds are transferred
+- Events are emitted
 
 ---
 
+# Security Design
 
+## Replay Protection
 
-\## Authorization Design
+Replay attacks are prevented using:
 
-
-
-Authorizations are generated off-chain as deterministic hashes including:
-
-
-
-\- Vault address  
-
-\- Chain ID  
-
-\- Recipient address  
-
-\- Withdrawal amount  
-
-\- Unique nonce  
-
-
-
-The `AuthorizationManager` enforces one-time usage of each authorization to prevent replay attacks.
-
-
-
----
-
-
-
-\## Manual Testing
-
-
-
-\### 1. Start Local Blockchain
-
-
-
-```bash
-
-npx hardhat node
-
-```
-
-\### 2. Deploy Contracts
-
-
-
-In a new terminal:
-
-
-
-npx hardhat run scripts/deploy.js --network localhost
-
-
-
-Example output:
-
-
-
-AuthorizationManager deployed at: 0xAuthorizationManagerAddress
-
-SecureVault deployed at: 0xSecureVaultAddress
-
-
-
-\### 3. Test Deposit
-
-npx hardhat console --network localhost
-
-
-
-const \[sender] = await ethers.getSigners();
-
-
-
-await sender.sendTransaction({
-
-&nbsp; to: "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6",
-
-&nbsp; value: ethers.parseEther("1")
-
-});
-
-
-
-\### 4. Test Withdrawal
-
-
-
-Generate an authorization hash off-chain
-
-
-
-Call:
-
-
-
-withdraw(recipient, amount, authId)
-
-
-
-
-
-ETH is transferred successfully to the recipient
-
-
-
-\### 5. Replay Protection Check
-
-
-
-Reusing the same authorization will revert:
-
-
-
-Authorization already used
-
-
-
-
-
-This confirms replay protection is working correctly.
-
-
-
-\## Security Considerations
-
-
-
-One-time authorization enforcement
-
-
-
-Replay attack prevention
-
-
-
-Balance checks before transfers
-
-
-
-State updates occur before value transfers
-
-
-
-Minimal trusted surface area between contracts
-
-
-
-\## Build \& Compile
-
-npx hardhat compile
-
-
-
-\## Tech Stack
-
-
-
-Solidity ^0.8.20
-
-
-
-Hardhat
-
-
-
-Ethers.js
-
-
-
-Docker
-
-
-
-Node.js
-
-
-
+```solidity
+mapping(bytes32 => bool) public consumed;

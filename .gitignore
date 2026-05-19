@@ -1,12 +1,21 @@
-# Node modules
+# Node dependencies
 node_modules/
 
-# Hardhat build artifacts
+# Hardhat build files
 artifacts/
 cache/
-deployments/
+typechain-types/
+
+# Environment variables
+.env
+
+# Coverage reports
+coverage/
+coverage.json
 
 # Logs
+logs/
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -15,5 +24,19 @@ yarn-error.log*
 .DS_Store
 Thumbs.db
 
-# Environment files
-.env
+# IDE files
+.vscode/
+.idea/
+
+# Docker
+docker-data/
+
+# Temporary files
+tmp/
+temp/
+
+# Solidity coverage
+.solcover.js
+
+# Deployment outputs
+deployments/

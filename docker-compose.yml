@@ -1,21 +1,13 @@
-version: "3.9"
 services:
-  blockchain:
-    image: node:20-alpine
-    container_name: secure-vault-system-blockchain
-    working_dir: /app
-    volumes:
-      - .:/app
-    command: npx hardhat node
+  secure-vault:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+
+    container_name: secure-vault
+
     ports:
       - "8545:8545"
 
-  deployer:
-    build: .
-    container_name: secure-vault-system-deployer
-    working_dir: /app
-    volumes:
-      - .:/app
-    depends_on:
-      - blockchain
-    entrypoint: ["./docker/entrypoint.sh"]
+    stdin_open: true
+    tty: true
